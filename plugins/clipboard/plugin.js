@@ -501,6 +501,33 @@
 						// non-IEs part
 						try {
 							// Other browsers throw an error if the command is disabled.
+              //
+
+/*
+var monkey = CKEDITOR.instances.editor1;
+console.log(monkey);
+
+var sel = monkey.getSelection();
+var rng = monkey.getSelection().getRanges();
+
+var t = rng[0].getTouchedStartNode();
+var cpy = rng[0].clone();
+var cut = rng[0].clone(); 
+
+var frag = cpy.cloneContents();
+
+rng[0].moveToElementEditablePosition(t, true);
+monkey.getSelection().selectRanges(rng);
+console.log(rng, cpy, cut, t);
+
+frag.insertAfterNode(t);
+*/
+
+
+            /*
+             * var ins = monkey.getSelection();
+             * ins.selectRanges(cpy);
+             * */
 							return editor.document.$.execCommand( type, false, null );
 						} catch ( e ) {
 							return false;
