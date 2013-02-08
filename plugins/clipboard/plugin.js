@@ -288,6 +288,33 @@
 			// If command didn't succeed (only IE allows to access clipboard and only if
 			// user agrees) open and handle paste dialog.
 			if ( getClipboardDataDirectly() === false ) {
+
+        console.log("PASTE: No direct access to the clipboard.", sel);
+        if(editor.BUFFER){
+           //This doesn't work, it makes the range selection some random point in the middle of the editor
+           //editor.focus(); 
+           var sel = editor.getSelection();
+           var rng = sel.getRanges();
+           var pt  = editor.BUFFER_POINT; //Always loses range selection and uses previous pointer
+
+           if(rng && rng.length > 0){
+             console.log("Yay, range selection?", rng);
+             pt = rng[0].getTouchedStartNode();
+             rng[0].deleteContents(true);
+             rng[0].moveToElementEditablePosition(pt, true);
+             sel.selectRanges(rng);
+           }else{
+             console.log("No range selection found?  wth?");
+           }
+           var buffer = editor.BUFFER;
+               buffer.insertAfterNode(pt); 
+           editor.BUFFER = null;
+           editor.BUFFER_POINT = null; 
+           return ; 
+        }
+
+         
+
 				// Direct access to the clipboard wasn't successful so remove listener.
 				editor.removeListener( 'paste', onPaste );
 
@@ -497,7 +524,6 @@
 					function tryToCutCopy( type ) {
 						if ( CKEDITOR.env.ie )
 							return execIECommand( type );
-
 						// non-IEs part
 						try {
 							// Other browsers throw an error if the command is disabled.
@@ -506,10 +532,30 @@
 							return false;
 						}
 					}
-
 					this.type == 'cut' && fixCut();
 
-					var success = tryToCutCopy( this.type );
+					var success = tryToCutCopy( this.type ); 
+          if(!success){//Poor mans copy paste that has to work for all browsers...
+            console.log("COPY/CUT?", type);
+            var sel = editor.getSelection();
+            var rng = sel.getRanges();
+            if(rng && rng.length){
+
+               //var buffer = rng[0].clone().cloneContents();
+               var buffer = rng[0].clone().cloneContents();
+               var t = rng[0].getTouchedStartNode();
+               if(type == 'cut'){
+                   buffer = rng[0].extractContents();
+               }
+               rng[0].moveToElementEditablePosition(t, true);
+               sel.selectRanges(rng);
+
+               editor.BUFFER       = buffer;
+               editor.BUFFER_POINT = t;
+               success = true;
+               console.log("FLUFFER of doom.", buffer);
+            }
+          }
 
 					if ( !success )
 						alert( editor.lang.clipboard[ this.type + 'Error' ] ); // Show cutError or copyError.
@@ -536,6 +582,8 @@
 							});
 						},
 						cmd = this;
+          console.log("Editor with data on the exec", editor, data);
+      
 
 					// Check data precisely - don't open dialog on empty string.
 					if ( typeof data == 'string' )
