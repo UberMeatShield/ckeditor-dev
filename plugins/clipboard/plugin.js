@@ -282,38 +282,38 @@
 			// and to retrieve modified data.type.
 			editor.on( 'beforePaste', onBeforePaste, null, null, 1000 );
 
+
+      //Poor mans paste... It has to come first or the getClipboardDataDirectly will screw with
+      //the selection ranges and then I don't know where to paste.
+      if(editor.BUFFER){
+        var sel = editor.getSelection();
+        var rng = sel.getRanges();
+        var pt  = editor.BUFFER_POINT; //Always loses range selection and uses previous pointer
+
+        if(rng && rng.length > 0){
+          console.log("Yay, range selection?", rng);
+          pt = rng[0].getTouchedStartNode();
+          rng[0].deleteContents(true);
+          rng[0].moveToElementEditablePosition(pt, true);
+          sel.selectRanges(rng);
+        }else{
+          console.log("No range selection found?  wth?");
+        }
+        if(pt){
+          var buffer = editor.BUFFER;
+              buffer.insertAfterNode(pt); 
+          editor.BUFFER = null;
+          editor.BUFFER_POINT = null; 
+          return ; 
+        }
+      }
+
 			// getClipboardDataDirectly() will fire 'beforePaste' synchronously, so we can
 			// check if it was canceled and if any listener modified data.type.
-
+      //
 			// If command didn't succeed (only IE allows to access clipboard and only if
 			// user agrees) open and handle paste dialog.
-			if ( getClipboardDataDirectly() === false ) {
-
-        console.log("PASTE: No direct access to the clipboard.", sel);
-        if(editor.BUFFER){
-           //This doesn't work, it makes the range selection some random point in the middle of the editor
-           //editor.focus(); 
-           var sel = editor.getSelection();
-           var rng = sel.getRanges();
-           var pt  = editor.BUFFER_POINT; //Always loses range selection and uses previous pointer
-
-           if(rng && rng.length > 0){
-             console.log("Yay, range selection?", rng);
-             pt = rng[0].getTouchedStartNode();
-             rng[0].deleteContents(true);
-             rng[0].moveToElementEditablePosition(pt, true);
-             sel.selectRanges(rng);
-           }else{
-             console.log("No range selection found?  wth?");
-           }
-           var buffer = editor.BUFFER;
-               buffer.insertAfterNode(pt); 
-           editor.BUFFER = null;
-           editor.BUFFER_POINT = null; 
-           return ; 
-        }
-
-         
+			if (getClipboardDataDirectly() === false ) {
 
 				// Direct access to the clipboard wasn't successful so remove listener.
 				editor.removeListener( 'paste', onPaste );
