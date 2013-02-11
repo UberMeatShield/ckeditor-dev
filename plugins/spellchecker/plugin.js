@@ -407,7 +407,7 @@
     this.container.empty().remove();
   };
 
-  /* Spellchecker web service
+  /* Spellchecker web service (TODO: Replace this with our BB implementation SpellChecker class 
    *************************/
 
   var WebService = function(config) {
