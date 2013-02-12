@@ -55,7 +55,7 @@ CKEDITOR.editorConfig = function( config ) {
 		'smiley,' +
 		'sourcearea,' +
 		'specialchar,' +
-    'spellcheck,' + 
+    'jqueryspellchecker,' + 
 		'stylescombo,' +
 		'tab,' +
 		'table,' +

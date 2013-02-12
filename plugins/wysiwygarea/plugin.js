@@ -644,8 +644,9 @@ CKEDITOR.config.disableNativeTableHandles = true;
  * @cfg
  * @member CKEDITOR.config
  */
-CKEDITOR.config.disableNativeSpellChecker = false;
-CKEDITOR.config.browserContextMenuOnCtrl = true;
+CKEDITOR.config.disableNativeSpellChecker = true;
+//CKEDITOR.config.disableNativeSpellChecker = false;
+//CKEDITOR.config.browserContextMenuOnCtrl = true;
 
 /**
  * The CSS file(s) to be used to apply style to the contents. It should
