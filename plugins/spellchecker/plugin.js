@@ -456,25 +456,35 @@
     };
   };
   WebService.prototype.checkWords = function(text, callback) {
-    console.log("Make request?", text, callback);
-    callback({data: [['haz']]});
-    return;
+    if(!window.Util) {
+      callback({data: [['haz']]});
+    }
+    //return;
 
     var wrap = function(callback, response){
-      if(response && response.length){ 
-        response = {data: [response]};
-      }
-      if(typeof callback == 'function'){
-        callback(response);
+      try{
+        if(response && response.length){ 
+          response = {data: [response]};
+        }
+        if(typeof callback == 'function'){
+          callback(response);
+        }
+      }catch(e){
+        console.error("Could not do the callback with this response.", response);
       }
     }.bind(this, callback);
+
+    var language = 'ENU';
     SpellCheck.XHR.checkText(language, text, wrap);
   };
 
   WebService.prototype.getSuggestions = function(word, callback) {
     console.log("Get suggestions.", word, callback);
-    callback(['has']);
-    return;
+    if(!window.Util) {
+      callback(['has']);
+    }
+    //return;
+    var language = 'ENU';
     SpellCheck.XHR.getSuggestions(language, word, callback);
   };
 
@@ -780,6 +790,7 @@
       var incorrectWords = response && !response.error && response.data ? response.data : []; 
       var outcome = 'success';
 
+      console.log("What is the response?", response);
       $.each(incorrectWords, function(i, words) {
         console.log("What is i?, words?", i, words);
         if (words.length) {
@@ -787,7 +798,6 @@
           return false;
         }
       });
-          console.log("Outcome: ", outcome);
       this.trigger('check.complete');
       this.trigger('check.' + outcome, incorrectWords);
       this.trigger(callback, incorrectWords);
