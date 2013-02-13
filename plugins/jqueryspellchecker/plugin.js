@@ -61,12 +61,41 @@
 
   /* Util
    *************************/
-
-  if (!Function.prototype.bind) {
-    Function.prototype.bind = function(scope) {
-      return $.proxy(this, scope);
-    };
-  }
+   if(!window.console){ //Help deal with IE lacking console except in debug modes.
+     window.console = {
+       log: function(){},
+       error: function(){},
+       warn: function(){},
+       info: function(){}
+     };
+   }
+   if(!Function.prototype.bind){ //More legacy IE support.
+     Function.prototype.bind = function (oThis){
+     if(typeof this !== "function"){
+       // closest thing possible to the ECMAScript 5 internal IsCallable function
+       throw new TypeError("Function.prototype.bind - what is trying to be bound is not callable");
+     }
+   
+     var aArgs = Array.prototype.slice.call(arguments, 1),
+       fToBind = this,
+       fNOP = function (){},
+       fBound = function (){
+         return fToBind.apply(this instanceof fNOP && oThis
+                    ? this
+                    : oThis,
+                    aArgs.concat(Array.prototype.slice.call(arguments)));
+       };
+   
+     fNOP.prototype = this.prototype;
+     fBound.prototype = new fNOP();
+     return fBound;
+     };
+   }
+   if(!String.prototype.trim){
+     String.prototype.trim = function(){
+       return this.replace(/^\s+|\s+$/g,"");
+     }
+   }
 
   var inherits = function(_sub, _super) {
     function F() {}
@@ -426,41 +455,29 @@
       }.bind(this)
     };
   };
-
-  WebService.prototype.makeRequest = function(config) {
-
-    var defaultConfig = $.extend(true, {}, this.defaultConfig);
-
-    return $.ajax($.extend(true, defaultConfig, config));
-  };
-
   WebService.prototype.checkWords = function(text, callback) {
+    //TODO: Deprecate jQuery
     console.log("Make request?", text, callback);
-    callback();
+    callback({data: [['haz']]});
     return;
 
-
-    return this.makeRequest({
-      data: {
-        action: 'get_incorrect_words',
-        text: text
-      },
-      success: callback
-    });
+    var wrap = function(callback, response){
+      if(response && response.length){ 
+        response = {data: [response]};
+      }
+      if(typeof callback == 'function'){
+        callback(response);
+      }
+    }.bind(this, callback);
+    SpellCheck.XHR.checkText(language, text, wrap);
   };
 
   WebService.prototype.getSuggestions = function(word, callback) {
+    //TODO: Deprecate jQuery mode
     console.log("Get suggestions.", word, callback);
     callback(['has']);
     return;
-
-    return this.makeRequest({
-      data: {
-        action: 'get_suggestions',
-        word: word
-      },
-      success: callback
-    });
+    SpellCheck.XHR.getSuggestions(language, word, callback);
   };
 
   /* Spellchecker base parser
@@ -761,11 +778,8 @@
   /* Event handlers */
 
   SpellChecker.prototype.onCheckWords = function(callback) {
-    return function(data) {
-      data = {}; 
-      data.data = [['haz']];
-
-      var incorrectWords = data.data;
+    return function(response) {
+      var incorrectWords = response && !response.error && response.data ? response.data : []; 
       var outcome = 'success';
 
       $.each(incorrectWords, function(i, words) {
