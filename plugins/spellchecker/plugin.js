@@ -777,6 +777,7 @@
 
   SpellChecker.prototype.onCheckWords = function(callback) {
     return function(response) {
+      console.log("What is the response?", response);
       var incorrectWords = response && !response.error && response.data ? response.data : []; 
       var outcome = 'success';
 
