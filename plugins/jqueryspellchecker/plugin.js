@@ -379,6 +379,7 @@
   };
 
   SuggestBox.prototype.onGetWords = function(words) {
+    console.log("On get words", words);
     this.addWords(words);
     this.footer.show();
     this.position();
@@ -724,7 +725,7 @@
       this.suggestBox.loading(true);
     }
     console.log("getSuggestions: What is the word?", word, callback);
-    //this.webservice.getSuggestions(word, callback);
+    this.webservice.getSuggestions(word, callback);
   };
 
   SpellChecker.prototype.replaceWord = function(oldWord, replacement, elementOrText) {
@@ -800,6 +801,8 @@
     this.incorrectWordElement = element;
     this.spellCheckerElement = incorrectWords.spellCheckerElement;
     this.spellCheckerIndex = this.elements.index(this.spellCheckerElement);
+
+
     this.suggestBox.showSuggestedWords(this.getSuggestions.bind(this), word, element);
     this.trigger('select.word', e);
   };
@@ -1202,7 +1205,6 @@ CKEDITOR.plugins.add('jqueryspellchecker', {
   positionSuggestBox: function() {
 
     var t = this;
-
     return function() {
       var ed = t.editor;
       var word = (this.wordElement.data('firstElement') || this.wordElement)[0];
@@ -1210,6 +1212,8 @@ CKEDITOR.plugins.add('jqueryspellchecker', {
       var p1 = $(ed.container.$).find('iframe').offset();
       var p2 = $(ed.container.$).offset();
       var p3 = $(word).offset();
+
+      //console.log("Is the position what is fucked?", p1, p2, p3);
 
       var left = p3.left + p2.left;
       var top = p3.top + p2.top + (p1.top - p2.top) + word.offsetHeight;
