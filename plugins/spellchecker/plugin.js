@@ -457,7 +457,9 @@
     };
   };
   WebService.prototype.checkWords = function(text, callback) {
-    //callback({data: [['haz']]});
+    if(!Util){
+      callback({data: [['haz']]});
+    }
     //return;
 
     var wrap = function(callback, response){
@@ -479,7 +481,9 @@
 
   WebService.prototype.getSuggestions = function(word, callback) {
     console.log("Get suggestions.", word, callback);
-    //callback(['has']);
+    if(!Util){
+      callback(['has', 'really', 'test', 'out of bb']);
+    }
     //return;
     var language = 'ENU';
     SpellCheck.XHR.getSuggestions(language, word, callback);
