@@ -157,6 +157,7 @@
       var element = $(e.currentTarget);
       var word = $.trim(element.data('word') || element.text());
 
+      console.log("Triggers which handler?", handlerName);
       this.trigger(handlerName, e, word, element, this);
     }.bind(this);
   };  
@@ -321,7 +322,7 @@
     this.container = $([
       '<div class="' + pluginName + '-suggestbox">',
       ' <div class="footer">',
-      '   <a href="#" class="ignore-word">' + local.ignoreWord + '</a>',
+      //'   <a href="#" class="ignore-word">' + local.ignoreWord + '</a>',
       '   <a href="#" class="ignore-all">' + local.ignoreAll + '</a>',
       '   <a href="#" class="ignore-forever">' + local.ignoreForever + '</a>',
       ' </div>',
@@ -456,9 +457,7 @@
     };
   };
   WebService.prototype.checkWords = function(text, callback) {
-    if(!window.Util) {
-      callback({data: [['haz']]});
-    }
+    //callback({data: [['haz']]});
     //return;
 
     var wrap = function(callback, response){
@@ -480,9 +479,7 @@
 
   WebService.prototype.getSuggestions = function(word, callback) {
     console.log("Get suggestions.", word, callback);
-    if(!window.Util) {
-      callback(['has']);
-    }
+    //callback(['has']);
     //return;
     var language = 'ENU';
     SpellCheck.XHR.getSuggestions(language, word, callback);
@@ -787,7 +784,6 @@
 
   SpellChecker.prototype.onCheckWords = function(callback) {
     return function(response) {
-      console.log("What is the response?", response);
       var incorrectWords = response && !response.error && response.data ? response.data : []; 
       var outcome = 'success';
 
@@ -1156,6 +1152,7 @@ CKEDITOR.plugins.add('spellchecker', {
 
     this.config.suggestBox.position = this.positionSuggestBox();
     
+    editor.spell = this;
     editor.addCommand(pluginName, {
       canUndo: false,
       readOnly: 1,
@@ -1235,14 +1232,22 @@ CKEDITOR.plugins.add('spellchecker', {
       var ed = t.editor;
       var word = (this.wordElement.data('firstElement') || this.wordElement)[0];
 
-      var p1 = $(ed.container.$).find('iframe').offset();
+      var p1 = $(ed.container.$).offset();
       var p2 = $(ed.container.$).offset();
       var p3 = $(word).offset();
 
+      console.log("What is the word / element?", word, p3)
+
+
+      window.MONKEY = word;
       //console.log("Is the position what is fucked?", p1, p2, p3);
 
       var left = p3.left + p2.left;
-      var top = p3.top + p2.top + (p1.top - p2.top) + word.offsetHeight;
+      var top  = p3.top + p2.top + (p1.top - p2.top) + word.offsetHeight;
+
+      var left = p3.left;
+      var top  = p3.top;
+      console.log("Left, top", left, top);
 
       top -= $(t.editorWindow).scrollTop();
 
