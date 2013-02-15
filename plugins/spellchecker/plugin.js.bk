@@ -147,9 +147,6 @@
     }
   };
 
-
-  
-
   /* Handlers  (Click occured on a word that has an error)
    *************************/
   var selectWordHandler = function(handlerName) {
@@ -160,9 +157,8 @@
       var element = $(e.currentTarget);
       var word = $.trim(element.data('word') || element.text());
 
-      clickedWord(e, element, word);
       console.log("Triggers which handler?", handlerName);
- //     this.trigger(handlerName, e, word, element, this);
+      this.trigger(handlerName, e, word, element, this);
     }.bind(this);
   };  
   
@@ -461,9 +457,8 @@
     };
   };
   WebService.prototype.checkWords = function(text, callback) {
-    if(!window.ContentManager){
+    if(!Util){
       callback({data: [['haz']]});
-      return;
     }
     //return;
 
@@ -486,9 +481,8 @@
 
   WebService.prototype.getSuggestions = function(word, callback) {
     console.log("Get suggestions.", word, callback);
-    if(!window.ContentManager){
+    if(!Util){
       callback(['has', 'really', 'test', 'out of bb']);
-      return;
     }
     //return;
     var language = 'ENU';
@@ -684,12 +678,11 @@
 
   /* Spellchecker (Main interface class, used by the plugin arch)
    *************************/
-  var SpellChecker = function(elements, config, editor) {
+  var SpellChecker = function(elements, config) {
 
     Events.call(this);
     this.elements = $(elements).attr('spellcheck', 'false');
     this.config = $.extend(true, defaultConfig, config);
-    this.editor = editor;
 
     this.setupWebService();
     this.setupParser();
@@ -702,41 +695,8 @@
   };
   inherits(SpellChecker, Events);
 
-
-  SpellChecker.prototype.setupWebService = function() { //Calls into BlackBox SpellCheck
-    this.webservice = new SpellCheck(SpellCheckManager, $(this.editor.container.$)[0]);
-    this.webservice.clickWord = function(ev, node, word){
-       console.log("webservice clickWord (evt, node, word, this)", this, ev, node, word);
-       var suggestions = SpellCheckManager.getSuggestions(word);
-       var menuItems = [];
-
-       // check if there are any word suggestions
-       if (suggestions && suggestions.length > 0){
-           for (var i = 0; i < suggestions.length; i++){
-               var suggestion = suggestions[i];
-               var obj = { node: node, word: word, replacement: suggestion }; // create menu item
-               menuItems.push({
-                   text: suggestion,
-                   onclick: { fn: this.replaceWord.bind(this, node, word, suggestion), obj: obj, scope: this}
-               });
-           }
-       }
-       else{
-           // create empty menu item
-           // disabled: true // BUG #16817: ESC does not close Suggestion list menu if it has 'No Suggestion'
-           menuItems.push({
-               text: 'No suggestions'
-           });
-       }
-       // get element XY
-       var menuXY = YUD.getXY(node);
-       menuXY = ContentManager.getEventXY(ev, menuXY); // include XY of iframe
-
-       // add height of word offset
-       var region = YAHOO.util.Region.getRegion(node);
-       menuXY[1] += region.height;
-       ContentManager.Menu.show(ev, menuItems, menuXY);
-    };
+  SpellChecker.prototype.setupWebService = function() {
+    this.webservice = new WebService(this.config);
   };
 
   SpellChecker.prototype.setupSuggestBox = function() {
@@ -787,32 +747,20 @@
     this.incorrectWords.on('select.word', this.onIncorrectWordSelect.bind(this));
   };
 
-
   /* Pubic API methods */
-  SpellChecker.prototype.clickEvt = function(evt){
-      console.log("So much hate.", evt);
-      if (evt.button == 0){ // check if what we clicked on was a misspelled word
-          var el = YUE.getTarget(evt);
-          if (YUD.hasClass(el, this.webservice.wordClassName)){
-              var word = Util.Dom.getTextContent(el);
-              this.webservice.clickWord(evt, el, word);
-          }
-      }
-  };
 
   SpellChecker.prototype.check = function(text, callback) {
     this.trigger('check.start');
     text = typeof text === 'string' ? this.parser.clean(text) : this.parser.getText(text || '', this.config.getText);
 
-    this.webservice.check();
-    //$(this.editor.container.$).on('click', this.clickEvt.bind(this));
-    ($(this.editor.container.$)[0]).onclick = this.clickEvt.bind(this);
-    //console.log(
+    this.webservice.checkWords(text, this.onCheckWords(callback));
+    //
+    //callback({data: ['haz']});
   };
 
   SpellChecker.prototype.getSuggestions = function(word, callback) {
     if (this.suggestBox) {
-      //this.suggestBox.loading(true);
+      this.suggestBox.loading(true);
     }
     console.log("getSuggestions: What is the word?", word, callback);
     this.webservice.getSuggestions(word, callback);
@@ -1248,13 +1196,11 @@ CKEDITOR.plugins.add('spellchecker', {
   destroy: function() {
     if (!this.spellchecker) 
       return;
-    this.spellchecker.webservice.done();
     this.spellchecker.destroy();
     this.spellchecker = null;
     this.editor.setReadOnly(false);
     this.editor.commands.spellchecker.toggleState();
     $(this.editorWindow).off('.spellchecker');
-    console.log("Destroy?");
   },
 
   toggle: function(editor) {
@@ -1272,7 +1218,7 @@ CKEDITOR.plugins.add('spellchecker', {
       return $('<div />').append(t.editor.getData()).text();
     };
 
-    t.spellchecker = new SpellChecker(t.editor.document.$.body, this.config, t.editor);
+    t.spellchecker = new SpellChecker(t.editor.document.$.body, this.config);
     t.spellchecker.on('check.success', function() {
       alert('There are no incorrectly spelt words.');
       t.destroy();
@@ -1290,20 +1236,22 @@ CKEDITOR.plugins.add('spellchecker', {
       var ed = t.editor;
       var word = (this.wordElement.data('firstElement') || this.wordElement)[0];
 
-      var iframe = $(ed.container.$).find('iframe');
-      var p1 = iframe && iframe.offset() ? iframe.offset() : $(ed.container.$).offset();
+      var p1 = $(ed.container.$).offset();
       var p2 = $(ed.container.$).offset();
       var p3 = $(word).offset();
 
       console.log("What is the word / element?", word, p3)
+
+
       window.MONKEY = word;
+      //console.log("Is the position what is fucked?", p1, p2, p3);
+
+      var left = p3.left + p2.left;
+      var top  = p3.top + p2.top + (p1.top - p2.top) + word.offsetHeight;
 
       var left = p3.left;
       var top  = p3.top;
-      if(iframe){
-        left = p3.left + p2.left;
-        top  = p3.top + p2.top + (p1.top - p2.top) + word.offsetHeight;
-      }
+      console.log("Left, top", left, top);
 
       top -= $(t.editorWindow).scrollTop();
 
