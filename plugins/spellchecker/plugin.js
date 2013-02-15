@@ -457,8 +457,9 @@
     };
   };
   WebService.prototype.checkWords = function(text, callback) {
-    if(!Util){
+    if(!window.ContentManager){
       callback({data: [['haz']]});
+      return;
     }
     //return;
 
@@ -481,8 +482,9 @@
 
   WebService.prototype.getSuggestions = function(word, callback) {
     console.log("Get suggestions.", word, callback);
-    if(!Util){
+    if(!window.ContentManager){
       callback(['has', 'really', 'test', 'out of bb']);
+      return;
     }
     //return;
     var language = 'ENU';
@@ -1236,22 +1238,20 @@ CKEDITOR.plugins.add('spellchecker', {
       var ed = t.editor;
       var word = (this.wordElement.data('firstElement') || this.wordElement)[0];
 
-      var p1 = $(ed.container.$).offset();
+      var iframe = $(ed.container.$).find('iframe');
+      var p1 = iframe && iframe.offset() ? iframe.offset() : $(ed.container.$).offset();
       var p2 = $(ed.container.$).offset();
       var p3 = $(word).offset();
 
       console.log("What is the word / element?", word, p3)
-
-
       window.MONKEY = word;
-      //console.log("Is the position what is fucked?", p1, p2, p3);
-
-      var left = p3.left + p2.left;
-      var top  = p3.top + p2.top + (p1.top - p2.top) + word.offsetHeight;
 
       var left = p3.left;
       var top  = p3.top;
-      console.log("Left, top", left, top);
+      if(iframe){
+        left = p3.left + p2.left;
+        top  = p3.top + p2.top + (p1.top - p2.top) + word.offsetHeight;
+      }
 
       top -= $(t.editorWindow).scrollTop();
 
