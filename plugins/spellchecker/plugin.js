@@ -186,8 +186,24 @@ CKEDITOR.plugins.add('spellchecker', {
     this.spellchecker = null;
     this.editor.setReadOnly(false);
     this.editor.commands.spellchecker.toggleState();
+    if(YAHOO.env.ua.gecko){
+      this.firefoxFocusHack();
+    }
   },
-
+  firefoxFocusHack: function(){
+    //This seems totally broken, because it IS, but READ
+    // https://bugz.airws.org/default.asp?72456 before changing
+    try{ 
+      var hack = document.createElement('input');
+      hack.type = 'text';
+      this.editor.contentDom.appendChild(hack);
+      hack.focus();
+      hack.parentNode.removeChild(hack);
+      this.editor.focus();
+    }catch(e){
+      console.error("Failed to manage the focus events.", e);
+    }
+  },
   toggle: function(editor) {
     this.editor = editor;
     if (!this.spellchecker) {
