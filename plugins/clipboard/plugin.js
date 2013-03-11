@@ -226,10 +226,12 @@
 				// because of changes introduced in the same commit as this comment.
 				// Editor.getClipboardData adds listner to the dialog's events which are
 				// fired after a while (not like 'showDialog').
+        /*
 				setTimeout( function() {
 					// Open default paste dialog.
 					editor.openDialog( 'paste', evt.data );
 				}, 0 );
+        */
 			});
 		}
 	});
@@ -291,13 +293,10 @@
         var pt  = editor.BUFFER_POINT; //Always loses range selection and uses previous pointer
 
         if(rng && rng.length > 0){
-          console.log("Yay, range selection?", rng);
           pt = rng[0].getTouchedStartNode();
           rng[0].deleteContents(true);
           rng[0].moveToElementEditablePosition(pt, true);
           sel.selectRanges(rng);
-        }else{
-          console.log("No range selection found?  wth?");
         }
         if(pt){
           var buffer = editor.BUFFER;
@@ -536,7 +535,6 @@
 
 					var success = tryToCutCopy( this.type ); 
           if(!success){//Poor mans copy paste that has to work for all browsers...
-            console.log("COPY/CUT?", type);
             var sel = editor.getSelection();
             var rng = sel.getRanges();
             if(rng && rng.length){
@@ -553,12 +551,12 @@
                editor.BUFFER       = buffer;
                editor.BUFFER_POINT = t;
                success = true;
-               console.log("FLUFFER of doom.", buffer);
             }
           }
 
-					if ( !success )
-						alert( editor.lang.clipboard[ this.type + 'Error' ] ); // Show cutError or copyError.
+					if ( !success ){
+            console.error("editor.lang.clipboard[ this.type + 'Error' ] ); // Show cutError or copyError.");
+          }
 
 					return success;
 				}
@@ -582,7 +580,6 @@
 							});
 						},
 						cmd = this;
-          console.log("Editor with data on the exec", editor, data);
       
 
 					// Check data precisely - don't open dialog on empty string.
