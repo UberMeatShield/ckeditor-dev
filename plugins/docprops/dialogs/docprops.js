@@ -1,6 +1,6 @@
 ﻿/**
  * @license Copyright (c) 2003-2013, CKSource - Frederico Knabben. All rights reserved.
- * For licensing, see LICENSE.html or http://ckeditor.com/license
+ * For licensing, see LICENSE.md or http://ckeditor.com/license
  */
 
 CKEDITOR.dialog.add( 'docProps', function( editor ) {
@@ -146,13 +146,12 @@ CKEDITOR.dialog.add( 'docProps', function( editor ) {
 			};
 		};
 	var previewSrc = 'javascript:' +
-		'void((function(){' +
-			encodeURIComponent( 'document.open();' +
-		( CKEDITOR.env.isCustomDomain() ? 'document.domain=\'' + document.domain + '\';' : '' ) +
-		'document.write( \'<html style="background-color: #ffffff; height: 100%"><head></head><body style="width: 100%; height: 100%; margin: 0px">' + lang.previewHtml + '</body></html>\' );' +
-		'document.close();'
-		) +
-		'})())';
+		'void((function(){' + encodeURIComponent(
+			'document.open();' +
+			( CKEDITOR.env.ie ? '(' + CKEDITOR.tools.fixDomain + ')();' : '' ) +
+			'document.write( \'<html style="background-color: #ffffff; height: 100%"><head></head><body style="width: 100%; height: 100%; margin: 0px">' + lang.previewHtml + '</body></html>\' );' +
+			'document.close();'
+		) + '})())';
 
 	return {
 		title: lang.title,

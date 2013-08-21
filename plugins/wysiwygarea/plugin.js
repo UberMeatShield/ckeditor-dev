@@ -1,6 +1,6 @@
 ﻿/**
  * @license Copyright (c) 2003-2013, CKSource - Frederico Knabben. All rights reserved.
- * For licensing, see LICENSE.html or http://ckeditor.com/license
+ * For licensing, see LICENSE.md or http://ckeditor.com/license
  */
 
 /**
@@ -11,18 +11,17 @@
 (function() {
 	CKEDITOR.plugins.add( 'wysiwygarea', {
 		init: function( editor ) {
+			if ( editor.config.fullPage ) {
+				editor.addFeature( {
+					allowedContent: 'html head title; style [media,type]; body (*)[id]; meta link [*]',
+					requiredContent: 'body'
+				} );
+			}
+
 			editor.addMode( 'wysiwyg', function( callback ) {
-				var iframe = CKEDITOR.document.createElement( 'iframe' );
-				iframe.setStyles({ width: '100%', height: '100%' } );
-				iframe.addClass( 'cke_wysiwyg_frame cke_reset' );
-
-				var contentSpace = editor.ui.space( 'contents' );
-				contentSpace.append( iframe );
-
 				var src = 'document.open();' +
-					// The document domain must be set any time we
-				// call document.open().
-				( isCustomDomain ? ( 'document.domain="' + document.domain + '";' ) : '' ) +
+					// In IE, the document domain must be set any time we call document.open().
+					( CKEDITOR.env.ie ? '(' + CKEDITOR.tools.fixDomain + ')();' : '' ) +
 					'document.close();';
 
 				// With IE, the custom domain has to be taken care at first,
@@ -32,17 +31,29 @@
 					:
 					'';
 
+				var iframe = CKEDITOR.dom.element.createFromHtml( '<iframe src="' + src + '" frameBorder="0"></iframe>' );
+				iframe.setStyles( { width: '100%', height: '100%' } );
+				iframe.addClass( 'cke_wysiwyg_frame cke_reset' );
+
+				var contentSpace = editor.ui.space( 'contents' );
+				contentSpace.append( iframe );
+
+
 				// Asynchronous iframe loading is only required in IE>8 and Gecko (other reasons probably).
 				// Do not use it on WebKit as it'll break the browser-back navigation.
 				var useOnloadEvent = CKEDITOR.env.ie || CKEDITOR.env.gecko;
 				if ( useOnloadEvent )
 					iframe.on( 'load', onLoad );
 
-				var frameLabel = [ editor.lang.editor, editor.name ].join( ',' ),
+				var frameLabel = editor.title,
 					frameDesc = editor.lang.common.editorHelp;
 
-				if ( CKEDITOR.env.ie )
-					frameLabel += ', ' + frameDesc;
+				if ( frameLabel ) {
+					if ( CKEDITOR.env.ie )
+						frameLabel += ', ' + frameDesc;
+
+					iframe.setAttribute( 'title', frameLabel );
+				}
 
 				var labelId = CKEDITOR.tools.getNextId(),
 					desc = CKEDITOR.dom.element.createFromHtml( '<span id="' + labelId + '" class="cke_voice_label">' + frameDesc + '</span>' );
@@ -56,10 +67,7 @@
 				});
 
 				iframe.setAttributes({
-					frameBorder: 0,
-					'aria-describedby' : labelId,
-					title: frameLabel,
-					src: src,
+					'aria-describedby': labelId,
 					tabIndex: editor.tabIndex,
 					allowTransparency: 'true'
 				});
@@ -94,9 +102,6 @@
 			});
 		}
 	});
-
-	// Support for custom document.domain in IE.
-	var isCustomDomain = CKEDITOR.env.isCustomDomain();
 
 	function onDomReady( win ) {
 		var editor = this.editor,
@@ -176,10 +181,6 @@
 				}
 			});
 		}
-
-		// Gecko needs a key event to 'wake up' editing when the document is
-		// empty. (#3864, #5781)
-		CKEDITOR.env.gecko && CKEDITOR.tools.setTimeout( activateEditing, 0, this, editor );
 
 		// ## START : disableNativeTableHandles and disableObjectResizing settings.
 
@@ -311,8 +312,12 @@
 			setData: function( data, isSnapshot ) {
 				var editor = this.editor;
 
-				if ( isSnapshot )
+				if ( isSnapshot ) {
 					this.setHtml( data );
+					// Fire dataReady for the consistency with inline editors
+					// and because it makes sense. (#10370)
+					editor.fire( 'dataReady' );
+				}
 				else {
 					this._.isLoadingData = true;
 					editor._.dataStore = { id:1 };
@@ -405,7 +410,6 @@
 					// is fully editable even before the editing iframe is fully loaded (#4455).
 					var bootstrapCode =
 						'<script id="cke_actscrpt" type="text/javascript"' + ( CKEDITOR.env.ie ? ' defer="defer" ' : '' ) + '>' +
-							( isCustomDomain ? ( 'document.domain="' + document.domain + '";' ) : '' ) +
 							'var wasLoaded=0;' +	// It must be always set to 0 as it remains as a window property.
 							'function onload(){' +
 								'if(!wasLoaded)' +	// FF3.6 calls onload twice when editor.setData. Stop that.
@@ -459,7 +463,9 @@
 					var data = fullPage ? doc.getDocumentElement().getOuterHtml() : doc.getBody().getHtml();
 
 					// BR at the end of document is bogus node for Mozilla. (#5293).
-					if ( CKEDITOR.env.gecko )
+					// Prevent BRs from disappearing from the end of the content
+					// while enterMode is ENTER_BR (#10146).
+					if ( CKEDITOR.env.gecko && config.enterMode != CKEDITOR.ENTER_BR )
 						data = data.replace( /<br>(?=\s*(:?$|<\/body>))/, '' );
 
 					if ( editor.dataProcessor )
@@ -508,72 +514,12 @@
 		}
 	});
 
-	// Fixing Firefox 'Back-Forward Cache' breaks design mode. (#4514)
-	if ( CKEDITOR.env.gecko ) {
-		(function() {
-			var body = document.body;
-
-			if ( !body )
-				window.addEventListener( 'load', arguments.callee, false );
-			else {
-				var currentHandler = body.getAttribute( 'onpageshow' );
-				body.setAttribute( 'onpageshow', ( currentHandler ? currentHandler + ';' : '' ) + 'event.persisted&&(function(){' +
-					'var x=CKEDITOR.instances,d,i;' +
-					'for(i in x){' +
-						'd=x[i].document;' +
-						'if(d){' +
-							'd.$.designMode="off";' +
-							'd.$.designMode="on";' +
-						'}' +
-					'}' +
-					'})();' );
-			}
-		})();
-
-	}
-
 	// DOM modification here should not bother dirty flag.(#4385)
 	function restoreDirty( editor ) {
 		if ( !editor.checkDirty() )
 			setTimeout( function() {
 			editor.resetDirty();
 		}, 0 );
-	}
-
-	function activateEditing( editor ) {
-		if ( editor.readOnly )
-			return;
-
-		var win = editor.window,
-			doc = editor.document,
-			body = doc.getBody(),
-			bodyFirstChild = body.getFirst(),
-			bodyChildsNum = body.getChildren().count();
-
-		if ( !bodyChildsNum || bodyChildsNum == 1 && bodyFirstChild.type == CKEDITOR.NODE_ELEMENT && bodyFirstChild.hasAttribute( '_moz_editor_bogus_node' ) ) {
-			restoreDirty( editor );
-
-			// Memorize scroll position to restore it later (#4472).
-			var hostDocument = CKEDITOR.document;
-			var hostDocumentElement = hostDocument.getDocumentElement();
-			var scrollTop = hostDocumentElement.$.scrollTop;
-			var scrollLeft = hostDocumentElement.$.scrollLeft;
-
-			// Simulating keyboard character input by dispatching a keydown of white-space text.
-			var keyEventSimulate = doc.$.createEvent( "KeyEvents" );
-			keyEventSimulate.initKeyEvent( 'keypress', true, true, win.$, false, false, false, false, 0, 32 );
-			doc.$.dispatchEvent( keyEventSimulate );
-
-			if ( scrollTop != hostDocumentElement.$.scrollTop || scrollLeft != hostDocumentElement.$.scrollLeft )
-				hostDocument.getWindow().$.scrollTo( scrollLeft, scrollTop );
-
-			// Restore the original document status by placing the cursor before a bogus br created (#5021).
-			bodyChildsNum && body.getFirst().remove();
-			doc.getBody().appendBogus();
-			var nativeRange = editor.createRange();
-			nativeRange.setStartAt( body, CKEDITOR.POSITION_AFTER_START );
-			nativeRange.select();
-		}
 	}
 
 	function iframeCssFixes() {

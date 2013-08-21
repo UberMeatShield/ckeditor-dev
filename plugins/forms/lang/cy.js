@@ -1,6 +1,6 @@
 ﻿/*
 Copyright (c) 2003-2013, CKSource - Frederico Knabben. All rights reserved.
-For licensing, see LICENSE.html or http://ckeditor.com/license
+For licensing, see LICENSE.md or http://ckeditor.com/license
 */
 CKEDITOR.plugins.setLang( 'forms', 'cy', {
 	button: {
@@ -60,9 +60,9 @@ CKEDITOR.plugins.setLang( 'forms', 'cy', {
 		type: 'Math',
 		typeText: 'Testun',
 		typePass: 'Cyfrinair',
-		typeEmail: 'Email', // MISSING
-		typeSearch: 'Search', // MISSING
-		typeTel: 'Telephone Number', // MISSING
-		typeUrl: 'URL' // MISSING
+		typeEmail: 'Ebost',
+		typeSearch: 'Chwilio',
+		typeTel: 'Rhif Ffôn',
+		typeUrl: 'URL'
 	}
 });

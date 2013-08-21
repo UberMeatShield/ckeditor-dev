@@ -1,6 +1,6 @@
 ﻿/**
  * @license Copyright (c) 2003-2013, CKSource - Frederico Knabben. All rights reserved.
- * For licensing, see LICENSE.html or http://ckeditor.com/license
+ * For licensing, see LICENSE.md or http://ckeditor.com/license
  */
 
 /**
@@ -27,7 +27,7 @@ CKEDITOR.lang[ 'vi' ] = {
 	dir: 'ltr',
 
 	// ARIA description.
-	editor: 'Bộ soạn thảo',
+	editor: 'Bộ soạn thảo văn bản có định dạng',
 
 	// Common messages and labels.
 	common: {
@@ -35,7 +35,7 @@ CKEDITOR.lang[ 'vi' ] = {
 		// of reading non-English words. So be careful while translating it.
 		editorHelp: 'Nhấn ALT + 0 để được giúp đỡ',
 
-		browseServer: 'Duyệt trên máy chủ',
+		browseServer: 'Duyệt máy chủ',
 		url: 'URL',
 		protocol: 'Giao thức',
 		upload: 'Tải lên',
@@ -91,7 +91,7 @@ CKEDITOR.lang[ 'vi' ] = {
 		alignTop: 'Trên',
 		alignMiddle: 'Giữa',
 		alignBottom: 'Dưới',
-		invalidValue	: 'Invalid value.', // MISSING
+		invalidValue	: 'Giá trị không hợp lệ.',
 		invalidHeight: 'Chiều cao phải là số nguyên.',
 		invalidWidth: 'Chiều rộng phải là số nguyên.',
 		invalidCssLength: 'Giá trị quy định cho trường "%1" phải là một số dương có hoặc không có một đơn vị đo CSS hợp lệ (px, %, in, cm, mm, em, ex, pt, hoặc pc).',

@@ -1,6 +1,6 @@
 ﻿/**
  * @license Copyright (c) 2003-2013, CKSource - Frederico Knabben. All rights reserved.
- * For licensing, see LICENSE.html or http://ckeditor.com/license
+ * For licensing, see LICENSE.md or http://ckeditor.com/license
  */
 
 CKEDITOR.plugins.add( 'floatpanel', {
@@ -63,10 +63,6 @@ CKEDITOR.plugins.add( 'floatpanel', {
 
 			// Disable native browser menu. (#4825)
 			element.disableContextMenu();
-
-			// Floating panels are placed outside the main editor UI, so we must
-			// make them application regions as well. (#9543)
-			element.setAttribute( 'role', 'application' );
 
 			this.element = element;
 

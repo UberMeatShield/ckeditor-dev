@@ -1,6 +1,6 @@
 ﻿/**
  * @license Copyright (c) 2003-2013, CKSource - Frederico Knabben. All rights reserved.
- * For licensing, see LICENSE.html or http://ckeditor.com/license
+ * For licensing, see LICENSE.md or http://ckeditor.com/license
  */
 
 /**
@@ -11,7 +11,7 @@
 
 (function() {
 	CKEDITOR.plugins.add( 'magicline', {
-		lang: 'en,pl', // %REMOVE_LINE_CORE%
+		lang: 'ar,bg,ca,cs,cy,de,el,en,eo,es,eu,fa,fi,fr,fr-ca,gl,hr,hu,id,it,ja,ko,ku,lv,nb,nl,no,pl,pt,pt-br,ru,si,sk,sl,sq,sv,tr,ug,uk,vi,zh-cn', // %REMOVE_LINE_CORE%
 		init: initPlugin
 	});
 
@@ -205,7 +205,7 @@
 			editable.attachListener( that.inInlineMode ? editable : doc, 'mousemove', function( event ) {
 				checkMouseTimeoutPending = true;
 
-				if ( editor.mode != 'wysiwyg' || checkMouseTimer )
+				if ( editor.mode != 'wysiwyg' || editor.readOnly || checkMouseTimer )
 					return;
 
 				// IE<9 requires this event-driven object to be created
@@ -277,7 +277,7 @@
 
 			// Revert magicline hot node on undo/redo.
 			editor.on( 'loadSnapshot', function( event ) {
-				var elements = doc.getElementsByTag( that.enterBehavior ),
+				var elements = editor.document.getElementsByTag( that.enterBehavior ),
 					element;
 
 				for ( var i = elements.count(); i--; ) {
@@ -512,7 +512,8 @@
 	function initLine( that ) {
 		var doc = that.doc,
 			// This the main box element that holds triangles and the insertion button
-			line = newElementFromHtml( '<span contenteditable="false" style="' + CSS_COMMON + 'position:absolute;border-top:1px dashed ' + that.boxColor + '"></span>', doc );
+			line = newElementFromHtml( '<span contenteditable="false" style="' + CSS_COMMON + 'position:absolute;border-top:1px dashed ' + that.boxColor + '"></span>', doc ),
+			iconPath = this.path + 'images/' + ( env.hidpi ? 'hidpi/' : '' ) + 'icon.png';
 
 		extend( line, {
 
@@ -530,8 +531,9 @@
 					newElementFromHtml( '<span title="' + that.editor.lang.magicline.title +
 						'" contenteditable="false">&#8629;</span>', doc ), {
 					base: CSS_COMMON + 'height:17px;width:17px;' + ( that.rtl ? 'left' : 'right' ) + ':17px;'
-						+ 'background:url(' + this.path + 'images/icon.png) center no-repeat ' + that.boxColor + ';cursor:pointer;'
-						+ ( env.hc ? 'font-size: 15px;line-height:14px;border:1px solid #fff;text-align:center;' : '' ),
+						+ 'background:url(' + iconPath + ') center no-repeat ' + that.boxColor + ';cursor:pointer;'
+						+ ( env.hc ? 'font-size: 15px;line-height:14px;border:1px solid #fff;text-align:center;' : '' )
+						+ ( env.hidpi ? 'background-size: 9px 10px;' : '' ),
 					looks: [
 						'top:-8px;' + CKEDITOR.tools.cssVendorPrefix( 'border-radius', '2px', 1 ),
 						'top:-17px;' + CKEDITOR.tools.cssVendorPrefix( 'border-radius', '2px 2px 0px 0px', 1 ),
@@ -1693,10 +1695,10 @@
  *		// Changes keystroke to CTRL + ,
  *		CKEDITOR.config.magicline_keystrokePrevious = CKEDITOR.CTRL + 188;
  *
- * @cfg {Number} [magicline_keystrokePrevious=CKEDITOR.CTRL + CKEDITOR.ALT + 219 (CTRL + ALT + [)]
+ * @cfg {Number} [magicline_keystrokePrevious=CKEDITOR.CTRL + CKEDITOR.SHIFT + 219 (CTRL + SHIFT + [)]
  * @member CKEDITOR.config
  */
-CKEDITOR.config.magicline_keystrokePrevious = CKEDITOR.CTRL + CKEDITOR.ALT + 219; // CTRL + ALT + [
+CKEDITOR.config.magicline_keystrokePrevious = CKEDITOR.CTRL + CKEDITOR.SHIFT + 219; // CTRL + SHIFT + [
 
 /**
  * Defines default keystroke that access the closest unreachable focus space **after**
@@ -1705,10 +1707,10 @@ CKEDITOR.config.magicline_keystrokePrevious = CKEDITOR.CTRL + CKEDITOR.ALT + 219
  *		// Changes keystroke to CTRL + .
  *		CKEDITOR.config.magicline_keystrokeNext = CKEDITOR.CTRL + 190;
  *
- * @cfg {Number} [magicline_keystrokeNext=CKEDITOR.CTRL + CKEDITOR.ALT + 221 (CTRL + ALT + ])]
+ * @cfg {Number} [magicline_keystrokeNext=CKEDITOR.CTRL + CKEDITOR.SHIFT + 221 (CTRL + SHIFT + ])]
  * @member CKEDITOR.config
  */
-CKEDITOR.config.magicline_keystrokeNext = CKEDITOR.CTRL + CKEDITOR.ALT + 221; // CTRL + ALT + ]
+CKEDITOR.config.magicline_keystrokeNext = CKEDITOR.CTRL + CKEDITOR.SHIFT + 221; // CTRL + SHIFT + ]
 
 /**
  * Defines box color. The color may be adjusted to enhance readability.

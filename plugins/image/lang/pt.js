@@ -1,15 +1,15 @@
 ﻿/*
 Copyright (c) 2003-2013, CKSource - Frederico Knabben. All rights reserved.
-For licensing, see LICENSE.html or http://ckeditor.com/license
+For licensing, see LICENSE.md or http://ckeditor.com/license
 */
 CKEDITOR.plugins.setLang( 'image', 'pt', {
 	alertUrl: 'Por favor introduza o URL da imagem',
 	alt: 'Texto Alternativo',
 	border: 'Limite',
 	btnUpload: 'Enviar para o Servidor',
-	button2Img: 'Do you want to transform the selected image button on a simple image?', // MISSING
+	button2Img: 'Deseja transformar o botão com imagem selecionado em uma imagem?',
 	hSpace: 'Esp.Horiz',
-	img2Button: 'Do you want to transform the selected image on a image button?', // MISSING
+	img2Button: 'Deseja transformar a imagem selecionada em um botão com imagem?',
 	infoTab: 'Informação da Imagem',
 	linkTab: 'Hiperligação',
 	lockRatio: 'Proporcional',
@@ -18,9 +18,9 @@ CKEDITOR.plugins.setLang( 'image', 'pt', {
 	title: 'Propriedades da Imagem',
 	titleButton: 'Propriedades do Botão de imagens',
 	upload: 'Carregar',
-	urlMissing: 'Image source URL is missing.', // MISSING
+	urlMissing: 'O URL da fonte da imagem está em falta.',
 	vSpace: 'Esp.Vert',
-	validateBorder: 'Border must be a whole number.', // MISSING
-	validateHSpace: 'HSpace must be a whole number.', // MISSING
-	validateVSpace: 'VSpace must be a whole number.' // MISSING
+	validateBorder: 'A borda tem de ser um numero.',
+	validateHSpace: 'HSpace tem de ser um numero.',
+	validateVSpace: 'VSpace tem de ser um numero.'
 });

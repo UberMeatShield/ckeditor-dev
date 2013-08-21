@@ -1,6 +1,6 @@
 ﻿/*
 Copyright (c) 2003-2013, CKSource - Frederico Knabben. All rights reserved.
-For licensing, see LICENSE.html or http://ckeditor.com/license
+For licensing, see LICENSE.md or http://ckeditor.com/license
 */
 CKEDITOR.plugins.setLang( 'link', 'th', {
 	acccessKey: 'แอคเซส คีย์',
@@ -40,12 +40,12 @@ CKEDITOR.plugins.setLang( 'link', 'th', {
 	popupLeft: 'พิกัดซ้าย (Left Position)',
 	popupLocationBar: 'แสดงที่อยู่ของไฟล์',
 	popupMenuBar: 'แสดงแถบเมนู',
-	popupResizable: 'Resizable', // MISSING
+	popupResizable: 'สามารถปรับขนาดได้',
 	popupScrollBars: 'แสดงแถบเลื่อน',
 	popupStatusBar: 'แสดงแถบสถานะ',
 	popupToolbar: 'แสดงแถบเครื่องมือ',
 	popupTop: 'พิกัดบน (Top Position)',
-	rel: 'Relationship', // MISSING
+	rel: 'ความสัมพันธ์',
 	selectAnchor: 'ระบุข้อมูลของจุดเชื่อมโยง (Anchor)',
 	styles: 'ลักษณะการแสดงผล',
 	tabIndex: 'ลำดับของ แท็บ',

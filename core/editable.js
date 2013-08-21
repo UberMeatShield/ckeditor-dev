@@ -1,6 +1,6 @@
 ﻿/**
  * @license Copyright (c) 2003-2013, CKSource - Frederico Knabben. All rights reserved.
- * For licensing, see LICENSE.html or http://ckeditor.com/license
+ * For licensing, see LICENSE.md or http://ckeditor.com/license
  */
 
 (function() {
@@ -157,7 +157,7 @@
 			insertHtml: function( data, mode ) {
 				beforeInsert( this );
 				// Default mode is 'html'.
-				insert( this, mode == 'text' ? 'text' : 'html', data );
+				insert( this, mode || 'html', data );
 			},
 
 			/**
@@ -432,7 +432,11 @@
 
 				// Setup editor keystroke handlers on this element.
 				var keystrokeHandler = editor.keystrokeHandler;
-				keystrokeHandler.blockedKeystrokes[ 8 ] = editor.readOnly;
+
+				// If editor is read-only, then make sure that BACKSPACE key
+				// is blocked to prevent browser history navigation.
+				keystrokeHandler.blockedKeystrokes[ 8 ] = +editor.readOnly;
+
 				editor.keystrokeHandler.attach( this );
 
 				// Update focus states.
@@ -600,12 +604,7 @@
 							// BACKSPACE/DEL pressed at the start/end of table cell.
 							else if ( ( parent = path.contains( [ 'td', 'th', 'caption' ] ) ) &&
 								      range.checkBoundaryOfElement( parent, rtl ? CKEDITOR.START : CKEDITOR.END ) ) {
-								next = parent[ rtl ? 'getPreviousSourceNode' : 'getNextSourceNode' ]( 1, CKEDITOR.NODE_ELEMENT );
-								if ( next && !next.isReadOnly() && range.root.contains( next ) ) {
-									range[ rtl ? 'moveToElementEditEnd' : 'moveToElementEditStart' ]( next );
-									range.select();
-									isHandled = 1;
-								}
+								isHandled = 1;
 							}
 						}
 
@@ -927,11 +926,13 @@
 			// editable is instead handled by plugin.
 			if ( editable && editable.isInline() ) {
 
-				var ariaLabel = this.lang.editor + ', ' + this.name;
+				var ariaLabel = editor.title;
 
 				editable.changeAttr( 'role', 'textbox' );
 				editable.changeAttr( 'aria-label', ariaLabel );
-				editable.changeAttr( 'title', ariaLabel );
+
+				if ( ariaLabel )
+					editable.changeAttr( 'title', ariaLabel );
 
 				// Put the voice label in different spaces, depending on element mode, so
 				// the DOM element get auto detached on mode reload or editor destroy.
@@ -968,7 +969,13 @@
 				// Note: getRanges will be overwritten for tests since we want to test
 				// 		custom ranges and bypass native selections.
 				// TODO what should we do with others? Remove?
-				range = selection.getRanges()[ 0 ];
+				range = selection.getRanges()[ 0 ],
+				dontFilter = false;
+
+			if ( type == 'unfiltered_html' ) {
+				type = 'html';
+				dontFilter = true;
+			}
 
 			// Check range spans in non-editable.
 			if ( range.checkReadOnly() )
@@ -983,6 +990,7 @@
 				// The "state" value.
 				that = {
 					type: type,
+					dontFilter: dontFilter,
 					editable: editable,
 					editor: editor,
 					range: range,
@@ -1003,9 +1011,9 @@
 			// DATA PROCESSING
 
 			// Select range and stop execution.
-			if ( data ) {
-				processDataForInsertion( that, data );
-
+			// If data has been totally emptied after the filtering,
+			// any insertion is pointless (#10339).
+			if ( data && processDataForInsertion( that, data ) ) {
 				// DATA INSERTION
 				insertDataIntoRange( that );
 			}
@@ -1124,7 +1132,7 @@
 			// Process the inserted html, in context of the insertion root.
 			// Don't use the "fix for body" feature as auto paragraphing must
 			// be handled during insertion.
-			data = that.editor.dataProcessor.toHtml( data, null, false );
+			data = that.editor.dataProcessor.toHtml( data, null, false, that.dontFilter );
 
 
 			// Build the node list for insertion.
@@ -1147,6 +1155,8 @@
 			}
 
 			that.dataWrapper = wrapper;
+
+			return data;
 		}
 
 		function insertDataIntoRange( that ) {
@@ -1611,7 +1621,9 @@
 				element = element.getParent();
 			}
 
-			return wrapper.getOuterHtml().replace( '{cke-peak}', data );
+			// Don't use String.replace because it fails in IE7 if special replacement
+			// characters ($$, $&, etc.) are in data (#10367).
+			return wrapper.getOuterHtml().split( '{cke-peak}' ).join( data );
 		}
 
 		return insert;

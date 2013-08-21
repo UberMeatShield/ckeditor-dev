@@ -1,7 +1,7 @@
 ﻿/*
 Copyright (c) 2003-2013, CKSource - Frederico Knabben. All rights reserved.
-For licensing, see LICENSE.html or http://ckeditor.com/license
+For licensing, see LICENSE.md or http://ckeditor.com/license
 */
 CKEDITOR.plugins.setLang( 'print', 'km', {
-	toolbar: 'បោះពុម្ភ'
+	toolbar: 'បោះពុម្ព'
 });
