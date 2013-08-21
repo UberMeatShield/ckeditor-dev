@@ -70,6 +70,7 @@
   var SpellChecker = function(config, editor) {
     this.editor = editor;
     this.setupWebService();
+
   };
 
   SpellChecker.prototype.setupWebService = function() { //Calls into BlackBox SpellCheck
@@ -121,7 +122,6 @@
   SpellChecker.prototype.check = function(text, callback) {
     this.webservice.check();
     this.editor.contentDom.onclick = this.clickEvt.bind(this);
-    //console.log(
   };
 
   SpellChecker.prototype.getSuggestions = function(word, callback) {
@@ -136,17 +136,12 @@
 
 
 
-/*
- * jQuery Spellchecker - CKeditor Plugin - v0.2.4
- * https://github.com/badsyntax/jquery-spellchecker
- * Copyright (c) 2012 Richard Willis; Licensed MIT
- */
 CKEDITOR.plugins.add('spellchecker', {
+  requires: 'richcombo',
   config: {
     lang: 'en',
     parser: 'html'
   },
-
   init: function( editor ) {
 
     var t = this;
@@ -168,19 +163,57 @@ CKEDITOR.plugins.add('spellchecker', {
       toolbar: 'spellchecker,10'
     });
 
-  },
 
+    var lookup = {
+      ESN: 'Español',
+      ENU: 'English'
+    };
+    var langs = window.ContentManager ? ContentManager.getAccommodationProperties().getLanguages() : ['ENU', 'ESN'];
+
+    if(langs.length > 1){
+      editor.ui.addRichCombo('Languages', {
+        toolbar: 'spellchecker,20',
+        label: 'English',
+        value: 'English',
+        onClick: function(value){
+            this.setValue(value);
+            this.label = value;
+            if(value != 'English'){ //Set to spanish for creating the Spellcheck service
+              t.config.lang = 'esn'; //Legacy spellchecker used en, or esn, rather than ENU, ESN....
+            }
+        },
+        panel: {
+          css: [ CKEDITOR.skin.getPath( 'editor' ) ].concat( editor.config.contentsCss ),
+          multiSelect: false,
+          attributes: {'aria-label': 'Spellcheck language'}
+        },
+        init: function(){
+          this.startGroup('Language');
+          for(var i=0; i<langs.length; ++i){
+            if(lookup[langs[i]]){
+              this.add(lookup[langs[i]]);
+            }
+          }
+          this.commit();
+        }
+      });
+    }
+  },
   create: function() {
     this.editor.setReadOnly(true);
     this.editor.commands.spellchecker.toggleState();
 
-    this.createSpellchecker();
-    this.spellchecker.check();
+    if(this.createSpellchecker()){ //Not defined outside of blackbox
+      this.spellchecker.check();
+    }else{
+      this.editor.setReadOnly(false);
+      this.editor.commands.spellchecker.toggleState();
+    }
   },
 
   destroy: function() {
-    if (!this.spellchecker) 
-      return;
+    if (!this.spellchecker){return;}
+    
     this.spellchecker.webservice.done();
     this.spellchecker.destroy();
     this.spellchecker = null;
@@ -212,10 +245,13 @@ CKEDITOR.plugins.add('spellchecker', {
       this.destroy();
     }
   },
-
   createSpellchecker: function() {
-    var t = this;
-    t.spellchecker = new SpellChecker(this.config, t.editor);
+    if(window.SpellCheck){
+      this.spellchecker = new SpellChecker(this.config, this.editor);
+    }else{
+      console.warn("Spellcheck service was not defined, would have used cfg, editor", this.config, this.editor);
+    }
+    return this.spellchecker;
   }
 });
 
