@@ -1,6 +1,6 @@
 ﻿/**
  * @license Copyright (c) 2003-2013, CKSource - Frederico Knabben. All rights reserved.
- * For licensing, see LICENSE.md or http://ckeditor.com/license
+ * For licensing, see LICENSE.html or http://ckeditor.com/license
  */
 
 /**
@@ -84,9 +84,8 @@
 	// Register the plugin.
 	CKEDITOR.plugins.add( 'clipboard', {
 		requires: 'dialog',
-		lang: 'af,ar,bg,bn,bs,ca,cs,cy,da,de,el,en,en-au,en-ca,en-gb,eo,es,et,eu,fa,fi,fo,fr,fr-ca,gl,gu,he,hi,hr,hu,id,is,it,ja,ka,km,ko,ku,lt,lv,mk,mn,ms,nb,nl,no,pl,pt,pt-br,ro,ru,si,sk,sl,sq,sr,sr-latn,sv,th,tr,ug,uk,vi,zh,zh-cn', // %REMOVE_LINE_CORE%
+		lang: 'af,ar,bg,bn,bs,ca,cs,cy,da,de,el,en-au,en-ca,en-gb,en,eo,es,et,eu,fa,fi,fo,fr-ca,fr,gl,gu,he,hi,hr,hu,is,it,ja,ka,km,ko,ku,lt,lv,mk,mn,ms,nb,nl,no,pl,pt-br,pt,ro,ru,sk,sl,sr-latn,sr,sv,th,tr,ug,uk,vi,zh-cn,zh', // %REMOVE_LINE_CORE%
 		icons: 'copy,copy-rtl,cut,cut-rtl,paste,paste-rtl', // %REMOVE_LINE_CORE%
-		hidpi: true, // %REMOVE_LINE_CORE%
 		init: function( editor ) {
 			var textificationFilter;
 
@@ -293,6 +292,7 @@
         var rng = sel.getRanges();
         var pt  = editor.BUFFER_POINT; //Always loses range selection and uses previous pointer
 
+
         if(rng && rng.length > 0){
           pt = rng[0].getTouchedStartNode();
           rng[0].deleteContents(true);
@@ -300,6 +300,16 @@
           sel.selectRanges(rng);
         }
         if(pt){
+          //If you have modified the dom, and then copy pasted while selecting the very last element,
+          //the pointer/range selection can selected the editor div itself.  So just paste into the last el
+          if(pt.hasClass && pt.hasClass('editor')){ 
+            pt = pt.getLast();
+            if(!pt){
+              console.error("No last placeholder in CKEditor, some this very wrong (editor)", editor);
+              return;
+            }
+          }
+
           var buffer = editor.BUFFER;
               buffer.insertAfterNode(pt); 
           editor.BUFFER = null;
@@ -405,7 +415,8 @@
 			// If the "contextmenu" plugin is loaded, register the listeners.
 			if ( editor.contextMenu ) {
 				editor.contextMenu.addListener( function( element, selection ) {
-					inReadOnly = selection.getRanges()[ 0 ].checkReadOnly();
+          var rng = selection.getRanges();
+					inReadOnly = rng && rng[0] && rng[0].checkReadOnly ? rng[0].checkReadOnly() : true;
 					return {
 						cut: stateFromNamedCommand( 'Cut' ),
 						copy: stateFromNamedCommand( 'Copy' ),
@@ -504,22 +515,10 @@
 				!preventBeforePasteEvent && fixCut( editor );
 			});
 
-			var mouseupTimeout;
-
-			// Use editor.document instead of editable in non-IEs for observing mouseup
-			// since editable won't fire the event if selection process started within
-			// iframe and ended out of the editor (#9851).
-			editable.attachListener( CKEDITOR.env.ie ? editable : editor.document.getDocumentElement(), 'mouseup', function() {
-				mouseupTimeout = setTimeout( function() {
+			editable.on( 'mouseup', function() {
+				setTimeout( function() {
 					setToolbarStates();
 				}, 0 );
-			});
-
-			// Make sure that deferred mouseup callback isn't executed after editor instance
-			// had been destroyed. This may happen when editor.destroy() is called in parallel
-			// with mouseup event (i.e. a button with onclick callback) (#10219).
-			editor.on( 'destroy', function() {
-				clearTimeout( mouseupTimeout );
 			});
 
 			editable.on( 'keyup', setToolbarStates );
@@ -581,7 +580,7 @@
 				// Snapshots are done manually by editable.insertXXX methods.
 				canUndo: false,
 				async: true,
-
+        startDisabled: true,
 				exec: function( editor, data ) {
 					var fire = function( data, withBeforePaste ) {
 							data && firePasteEvents( data.type, data.dataValue, !!withBeforePaste );
@@ -706,8 +705,7 @@
 				cancel = function( evt ) {
 					evt.cancel();
 				},
-				ff3x = CKEDITOR.env.gecko && CKEDITOR.env.version <= 10902,
-				blurListener;
+				ff3x = CKEDITOR.env.gecko && CKEDITOR.env.version <= 10902;
 
 			// Avoid recursions on 'paste' event or consequent paste too fast. (#5730)
 			if ( doc.getById( 'cke_pastebin' ) )
@@ -726,7 +724,7 @@
 			// what is indistinguishable from pasted <br> (copying <br> in Opera isn't possible,
 			// but it can be copied from other browser).
 			var pastebin = new CKEDITOR.dom.element(
-				( CKEDITOR.env.webkit || editable.is( 'body' ) ) && !( CKEDITOR.env.ie || CKEDITOR.env.opera ) ? 'body' : 'div', doc );
+				editable.is( 'body' ) && !( CKEDITOR.env.ie || CKEDITOR.env.opera ) ? 'body' : 'div', doc );
 
 			pastebin.setAttribute( 'id', 'cke_pastebin' );
 
@@ -735,7 +733,6 @@
 				pastebin.appendBogus();
 
 			var containerOffset = 0,
-				offsetParent,
 				win = doc.getWindow();
 
 			// Seems to be the only way to avoid page scroll in Fx 3.x.
@@ -749,19 +746,8 @@
 					editable.append( pastebin );
 					// Style pastebin like .cke_editable, to minimize differences between origin and destination. (#9754)
 					pastebin.addClass( 'cke_editable' );
-
 					// Compensate position of offsetParent.
-					if ( !editable.is( 'body' ) ) {
-						// We're not able to get offsetParent from pastebin (body element), so check whether
-						// its parent (editable) is positioned.
-						if ( editable.getComputedStyle( 'position' ) != 'static' )
-							offsetParent = editable;
-						// And if not - safely get offsetParent from editable.
-						else
-							offsetParent = CKEDITOR.dom.element.get( editable.$.offsetParent );
-
-						containerOffset = offsetParent.getDocumentPosition().y;
-					}
+					containerOffset = ( editable.is( 'body' ) ? editable : CKEDITOR.dom.element.get( pastebin.$.offsetParent ) ).getDocumentPosition().y;
 				} else {
 					// Opera and IE doesn't allow to append to html element.
 					editable.getAscendant( CKEDITOR.env.ie || CKEDITOR.env.opera ? 'body' : 'html', 1 ).append( pastebin );
@@ -798,12 +784,6 @@
 
 			editor.on( 'selectionChange', cancel, null, null, 0 );
 
-			// Webkit fill fire blur on editable when moving selection to
-			// pastebin (if body is used). Cancel it because it causes incorrect
-			// selection lock in case of inline editor.
-			if ( CKEDITOR.env.webkit )
-				blurListener = editable.once( 'blur', cancel, null, null, -100 );
-
 			// Temporarily move selection to the pastebin.
 			isEditingHost && pastebin.focus();
 			var range = new CKEDITOR.dom.range( pastebin );
@@ -815,7 +795,7 @@
 			// this selection will be restored. We overwrite stored selection, so it's restored
 			// in pastebin. (#9552)
 			if ( CKEDITOR.env.ie ) {
-				blurListener = editable.once( 'blur', function( evt ) {
+				var blurListener = editable.once( 'blur', function( evt ) {
 					editor.lockSelection( selPastebin );
 				} );
 			}
@@ -978,7 +958,7 @@
 			else {
 				var sel = editor.getSelection(),
 					ranges = sel.getRanges();
-				retval = sel.getType() != CKEDITOR.SELECTION_NONE && !( ranges.length == 1 && ranges[ 0 ].collapsed );
+          retval = sel.getType() != CKEDITOR.SELECTION_NONE && !( ranges.length == 1 && ranges[ 0 ].collapsed );
 			}
 
 			return retval ? CKEDITOR.TRISTATE_OFF : CKEDITOR.TRISTATE_DISABLED;
