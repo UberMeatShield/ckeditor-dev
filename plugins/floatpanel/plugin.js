@@ -369,9 +369,9 @@ CKEDITOR.plugins.add( 'floatpanel', {
 						this.focus();
 
             if(this._.definition && this._.definition.preventDrag){
-              this.setDragOff();
+              //this.setDragOff();
             }else{//Required since we turn the event off.
-              this.setDragOn();
+              //this.setDragOn();
             }
             
 						// We need this get fired manually because of unfired focus() function.

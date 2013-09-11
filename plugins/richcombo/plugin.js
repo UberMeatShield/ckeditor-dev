@@ -75,7 +75,7 @@ CKEDITOR.plugins.add( 'richcombo', {
 				canGroup: false,
 				title: definition.label,
 				modes: { wysiwyg:1 },
-				editorFocus: 1
+				editorFocus: !CKEDITOR.env.mobile ? 1 : 0
 			});
 
 			// We don't want the panel definition in this object.
@@ -251,12 +251,11 @@ CKEDITOR.plugins.add( 'richcombo', {
 
 					me._.on = 1;
 
-					me.editorFocus && editor.focus();
-
+					!CKEDITOR.env.mobile && me.editorFocus && editor.focus();
 					if ( me.onOpen )
 						me.onOpen();
 
-					list.focus( !list.multiSelect && me.getValue() );
+					!CKEDITOR.env.mobile && list.focus( !list.multiSelect && me.getValue() );
 				};
 
 				panel.onHide = function( preventOnClose ) {
